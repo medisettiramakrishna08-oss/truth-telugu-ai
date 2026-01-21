@@ -30,7 +30,7 @@ if api_key:
                 try:
                     # మోడల్ సెలక్షన్ 
                     # గమనిక: పాత కోడ్ లో ఎర్రర్ వస్తే ఇక్కడ 'gemini-1.5-flash-latest' వాడండి
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
                     
                     # AI కి ఇచ్చే ఆర్డర్ (Prompt) - స్పేసింగ్ సరిచేయబడింది
                     prompt = """
