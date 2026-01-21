@@ -28,10 +28,11 @@ if api_key:
         if st.button("Generate Video Prompt 🚀"):
             with st.spinner("AI ఫోటోను గమనిస్తోంది... (Analyzing)"):
                 try:
-                    # మోడల్ సెలక్షన్ (Gemini 1.5 Flash - ఇది ఫాస్ట్ & ఫ్రీ)
-                   gemini-pro-visio
+                    # మోడల్ సెలక్షన్ 
+                    # గమనిక: పాత కోడ్ లో ఎర్రర్ వస్తే ఇక్కడ 'gemini-1.5-flash-latest' వాడండి
+                    model = genai.GenerativeModel('gemini-1.5-flash')
                     
-                    # AI కి ఇచ్చే ఆర్డర్ (Prompt)
+                    # AI కి ఇచ్చే ఆర్డర్ (Prompt) - స్పేసింగ్ సరిచేయబడింది
                     prompt = """
                     You are an expert AI Film Director. Analyze this image deeply.
                     Write a high-quality text prompt to generate a video from this image using AI tools like Runway Gen-2, Pika, or Sora.
