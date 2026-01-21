@@ -1,27 +1,16 @@
 import streamlit as st
-import requests
+from huggingface_hub import InferenceClient
 from PIL import Image
-import io
-import base64
 
 # --- పేజీ డిజైన్ ---
 st.set_page_config(page_title="Truth Telugu AI Director", page_icon="🎬", layout="centered")
-st.title("🎬 Image to Video Prompt (Hugging Face)")
-st.write("Updated for new Hugging Face Router API.")
+st.title("🎬 Image to Video Prompt (Official)")
+st.write("Stable Version using Hugging Face Official Client.")
 
 # --- సైడ్‌బార్ ---
 st.sidebar.header("🔑 Setup")
 api_key = st.sidebar.text_input("Hugging Face Access Token:", type="password")
-st.sidebar.info("Get token from: HuggingFace.co -> Settings -> Access Tokens")
-
-# --- API సెటప్ (Updated URL) ---
-# గమనిక: ఇక్కడ పాత లింక్ మార్చి కొత్త 'router' లింక్ పెట్టాము
-API_URL = "https://router.huggingface.co/hf-inference/models/llava-hf/llava-1.5-7b-hf"
-
-def query(payload, token):
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
+st.sidebar.info("Settings -> Access Tokens నుండి 'Write' పర్మిషన్ ఉన్న టోకెన్ వాడండి.")
 
 if api_key:
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
@@ -32,46 +21,40 @@ if api_key:
         st.image(image, caption="Uploaded Image", use_column_width=True)
 
         if st.button("Generate Prompt 🚀"):
-            with st.spinner("AI ఫోటోను ప్రాసెస్ చేస్తోంది..."):
+            with st.spinner("AI ఆలోచిస్తోంది... (Connecting via Official Client)"):
                 try:
-                    # ఇమేజ్‌ని Base64 లోకి మార్చడం
-                    img_byte_arr = io.BytesIO()
-                    image.save(img_byte_arr, format=image.format)
-                    img_byte_arr = img_byte_arr.getvalue()
-                    img_str = base64.b64encode(img_byte_arr).decode()
+                    # అఫీషియల్ క్లయింట్ సెటప్
+                    client = InferenceClient(token=api_key)
 
-                    # LLaVA మోడల్ కోసం ఇన్‌పుట్ ఫార్మాట్
-                    # LLaVA కి టెక్స్ట్ మరియు ఇమేజ్ కలిపి పంపాలి
-                    prompt_text = "USER: <image>\nDescribe this image in detail for a cinematic video creation. Include lighting, camera angles, and action.\nASSISTANT:"
+                    # మోడల్: LLaVA (ఇమేజ్ గురించి చెప్పే బెస్ట్ ఫ్రీ మోడల్)
+                    # ఇది ఇమేజ్‌ని చూసి మనం అడిగిన దానికి సమాధానం ఇస్తుంది
+                    model_id = "llava-hf/llava-1.5-7b-hf"
+
+                    # AI కి పంపాల్సిన ప్రశ్న
+                    prompt = "USER: <image>\nDescribe this image in great detail for a cinematic video generation prompt. Mention the movement, camera angle, and lighting.\nASSISTANT:"
                     
-                    payload = {
-                        "inputs": prompt_text,
-                        "image": img_str,
-                        "parameters": {"max_new_tokens": 200}
-                    }
+                    # ఇమేజ్‌ని టెక్స్ట్‌గా మార్చే ప్రాసెస్
+                    # stream=False అంటే మొత్తం ఆన్సర్ ఒకేసారి ఇస్తుంది
+                    response = client.text_generation(
+                        prompt, 
+                        model=model_id, 
+                        max_new_tokens=250, 
+                        stream=False,
+                        # ఇమేజ్‌ని డైరెక్ట్‌గా పంపిస్తున్నాం (మునుపటిలా base64 అవసరం లేదు)
+                        images=[image] 
+                    )
 
-                    # API కాల్ చేయడం
-                    output = query(payload, api_key)
-
-                    # ఎర్రర్ చెకింగ్
-                    if isinstance(output, dict) and "error" in output:
-                        st.error(f"Error form Hugging Face: {output['error']}")
-                        st.info("Tip: ఫ్రీ మోడల్ కాబట్టి కొన్నిసార్లు 'Loading' అని వస్తుంది. ఒక 30 సెకన్లు ఆగి మళ్ళీ ట్రై చేయండి.")
+                    # రిజల్ట్ చూపించు
+                    # కొన్నిసార్లు రిజల్ట్ లో మన ప్రశ్న కూడా కలిసి వస్తుంది, దాన్ని క్లీన్ చేస్తున్నాం
+                    final_answer = response.replace("USER: <image>", "").replace(prompt, "").strip()
                     
-                    elif isinstance(output, list) and len(output) > 0:
-                        # రిజల్ట్ చూపించడం
-                        generated_text = output[0]['generated_text']
-                        # క్లీన్ చేయడం
-                        clean_text = generated_text.replace(prompt_text, "").replace("USER:", "").strip()
-                        
-                        st.success("Done!")
-                        st.subheader("🎥 Video Prompt:")
-                        st.write(clean_text)
-                    else:
-                        st.warning("Unexpected response format. Try again.")
-                        st.write(output) # డీబగ్గింగ్ కోసం
-                        
+                    st.success("Success!")
+                    st.subheader("🎥 Video Prompt:")
+                    st.write(final_answer)
+
                 except Exception as e:
-                    st.error(f"System Error: {e}")
+                    # ఎర్రర్ వస్తే క్లియర్ గా చూపిస్తుంది
+                    st.error(f"Error: {e}")
+                    st.warning("ఒకవేళ 'Model is loading' అని వస్తే, దయచేసి 30 సెకన్లు ఆగి మళ్ళీ బటన్ నొక్కండి.")
 else:
     st.warning("👈 దయచేసి ఎడమ వైపున మీ Hugging Face Token ఎంటర్ చేయండి.")
