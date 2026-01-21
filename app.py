@@ -29,7 +29,7 @@ if api_key:
             with st.spinner("AI ఫోటోను గమనిస్తోంది... (Analyzing)"):
                 try:
                     # మోడల్ సెలక్షన్ (Gemini 1.5 Flash - ఇది ఫాస్ట్ & ఫ్రీ)
-                   model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                   gemini-pro-visio
                     
                     # AI కి ఇచ్చే ఆర్డర్ (Prompt)
                     prompt = """
